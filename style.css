@@ -128,49 +128,49 @@ ul.my_resources li a:hover {
 } /*-moz-animation:anim-skill 2s ease-out; -webkit-animation:anim-skill 2s ease-out; -o-animation:anim-skill 2s ease-out; animation:anim-skill 2s ease-out;*/
 
 .css3 {
-  width: 65%;
+  width: 90%;
 }
 .css3 > span {
   background: #fed201;
 }
 .git {
-  width: 25%;
+  width: 60%;
 }
 .git > span {
   background: #e2a9f3;
 }
 .html5 {
-  width: 70%;
+  width: 98%;
 }
 .html5 > span {
   background: #14bad4;
 }
 .javascript {
-  width: 90%;
+  width: 94%;
 }
 .javascript > span {
   background: #f5696c;
 }
-.npp {
-  width: 40%;
+.vs-code {
+  width: 89%;
 }
-.npp > span {
+.vs-code > span {
   background: #c6de64;
 }
 .php {
-  width: 50%;
+  width: 650%;
 }
 .php > span {
   background: #5ac5bd;
 }
-.vb {
+.python {
   width: 40%;
 }
-.vb > span {
+.python > span {
   background: #fe9a2e;
 }
 .sql {
-  width: 45%;
+  width: 68%;
 }
 .sql > span {
   background: #a9bcf5;
