@@ -1,0 +1,304 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Sabeel KM - Fulstack Developer</title>
+	<link rel="stylesheet" type="text/css" href="style.css" />
+	<link rel="stylesheet" type="text/css" href="font/css/fontello.css" />
+	<script type="text/javascript" src="js/modernizr.custom.04022.js"></script>
+	<link href='//fonts.googleapis.com/css?family=Open+Sans:400italic,600italic,400,600,700' rel='stylesheet'
+		type='text/css'>
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery.cookie.js"></script>
+	<script>
+		var last_tabs_radio;
+		var last_tabs2_radio;
+		function sizeContentToContents() {
+			var tabs_radio = $('input[name=radio-set]:checked').attr('class');
+			var tabs2_radio = $('input[name=tab-2-radio-set]:checked').attr('class');
+			var content = $('.content');
+
+			if (last_tabs_radio == 'tab-selector-2' && tabs_radio == 'tab-selector-2') {
+				content.addClass('skillsetDelay');
+				content.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', function () {
+					content.removeClass('skillsetDelay');
+				});
+			}
+
+			var elsToAccountForHeight = [];
+			switch (tabs_radio) {
+				case 'tab-selector-1':
+					elsToAccountForHeight.push($('.content-1'));
+					break;
+				case 'tab-selector-2':
+					elsToAccountForHeight.push($('.content-2'));
+					switch (tabs2_radio) {
+						case 'tab-2-tab-selector-1':
+							elsToAccountForHeight.push($('.skillset:nth-of-type(1)'));
+							break;
+						case 'tab-2-tab-selector-2':
+							elsToAccountForHeight.push($('.skillset:nth-of-type(2)'));
+							break;
+						case 'tab-2-tab-selector-3':
+							elsToAccountForHeight.push($('.skillset:nth-of-type(3)'));
+							break;
+						default:
+							alert('unsupported tabs2_radio');
+					}
+					break;
+				case 'tab-selector-3':
+					elsToAccountForHeight.push($('.content-3'));
+					break;
+				default:
+					alert('unsupported tabs_radio');
+			}
+
+			var totalHeight = 0;
+			$.each(elsToAccountForHeight, function (i, el) {
+				var contentsHeight = parseInt(el.css('height'));
+				var paddingTop = parseInt(el.css('padding-top'));
+				var paddingBtm = parseInt(el.css('padding-bottom'));
+				var marginTop = parseInt(el.css('margin-top'));
+				var marginBtm = parseInt(el.css('margin-bottom'));
+				totalHeight += contentsHeight + paddingTop + paddingBtm + marginTop + marginBtm;
+			});
+
+			content.height(totalHeight);
+			last_tabs2_radio = tabs2_radio;
+			last_tabs_radio = tabs_radio;
+		}
+
+		$(document).ready(function () {
+			sizeContentToContents();
+			$('input[type=radio]').change(function () {
+				sizeContentToContents();
+			});
+
+			$("textarea").mousedown(function () {
+				$(document).on('mousemove', sizeContentToContents);
+				//todo: only add the mousemove if the users mouse coords are near the bottom right
+				//todo: need to remove mousemvoe on highlight as they are obviously not in highlight area
+			});
+			$("textarea").on('mouseleave', sizeContentToContents); //to handle if user dbl clicks the resizer, which restoes original dimensons to ta //tsted and cannot add this event during mousdown and rem on mouseup. as when it rems on mouseup it is rendered useless on the resizer dbl click
+			$("textarea").mouseup(function () {
+				$(document).off('mousemove', sizeContentToContents);
+				//sizeContentToContents();
+			});
+			$('form > *').removeAttr('disabled', 'false');
+
+			$('form > .button').on('animationiteration', onsendbtnanimiter);
+
+			var cookieUsername = $.cookie('username');
+			var cookieEmail = $.cookie('email');
+			if (cookieUsername) {
+				$('input[name=username]')[0].value = cookieUsername;
+			}
+			if (cookieEmail) {
+				$('input[name=email]')[0].value = cookieEmail;
+			}
+		});
+
+		var submitting;
+		function onsendbtnanimiter() {
+			if (!submitting) {
+				//do it this way because we want to stop animation after sendingComplete AND iteration complete
+				$('form').removeClass('sending');
+				$('form > *').removeAttr('disabled', 'false');
+
+				if (sendSuccess) {
+					$('textarea[name=msg]')[0].value = '';
+					//alert('succesfull sent msg');
+				} else {
+					//alert('something went wrong and message was NOT sent');
+				}
+				//if no errors then reset form and notify success else notify issue
+			}
+		}
+
+		var sendSuccess;
+		var timeoutTime = 10; //in seconds
+		function sendForm(noTimeout) {
+			//animationiteration
+			submitting = true;
+			$('form').addClass('sending');
+
+			var serializedData = $('form').serializeArray(); //have to do this before disabling inputs otherwise it wont grab it
+			var data = {};
+			for (var i = 0; i < serializedData.length; i++) {
+				if (serializedData[i].value != '') {
+					if (serializedData[i].name == 'username') {
+						$.cookie('username', serializedData[i].value, {
+							expires: 365
+						});
+						serializedData[i].value = 'sabeelmuttil.github.io :: Message from ' + serializedData[i].value;
+						serializedData[i].name = 's';
+					} else if (serializedData[i].name == 'email') {
+						serializedData[i].name = 'from';
+						$.cookie('email', serializedData[i].value, {
+							expires: 365
+						});
+					}
+					data[serializedData[i].name] = serializedData[i].value;
+				}
+			}
+			//alert(uneval(data));
+
+			$('form > *').attr('disabled', 'true');
+
+			//console.log('serializedData',serializedData);
+			sendSuccess = false;
+			$.ajax({
+				url: "http://sabeelmuttil.herobo.com/mail.php",
+				type: "post",
+				data: data,
+				dataType: 'json',
+				timeout: noTimeout ? null : timeoutTime * 1000,
+				// callback handler that will be called on success
+				success: function (response, textStatus, jqXHR) {
+					// log a message to the console
+					submitting = false; //so the css anim is stopped, otherwise no need for this, as the complete function always gets called
+					if (response.errors) {
+						alert('The following exceptions occured:' + '\n -' + response.errors.join('\n -'));
+						//alert(uneval(response));
+					} else {
+						sendSuccess = true;
+						alert('Your message was succesfully sent - Thank you!');
+					}
+				},
+				// callback handler that will be called on completion
+				// which means, either on success or error
+				complete: function (e) {
+					// enable the inputs
+					//console.log(e);
+					submitting = false;
+					//alert('complete');
+				},
+				error: function (xmlhttprequest, textstatus, message) {
+					if (textstatus === 'timeout') {
+						submitting = false; //so the css anim is stopped, otherwise no need for this, as the complete function always gets called
+						if (confirm('The message is taking longer than ' + timeoutTime + ' seconds to send so it canceled. Would you like to remove timeout and send message again? (If you choose to cancel you can still reach me by emailing me at sabeelmuttil@gmail.com! I use a free web server so uptime and speed are issues.)')) {
+							sendForm(true);
+						}
+					} else {
+						alert('A server error occured while trying to send the message. I use a free web server so uptime and speed are issues. You can try again in 5 minutes, or send me an email at sabeelmuttil@gmail.com!\n\nThe server response was:\n-------------\n' + message);
+					}
+				}
+			});
+
+			// setTimeout(function() {
+			// 	  submitting = false;
+			// }, 2000);
+		}
+
+	</script>
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-48501852-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function () {
+			var ga = document.createElement('script');
+			ga.type = 'text/javascript';
+			ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0];
+			s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+</head>
+
+<body>
+	<div class="pro_cover">
+		<img src="img/avatar.jpg" class="pro_dp" /> <span class="name">Sabeel KM</span>
+		<p class="tw-name">Software Development Engineer</p>
+		<ul class="my_resources">
+			<li><a href="https://sabeelkm.medium.com/"><i class="icon-gist"></i></a></li>
+			<li><a href="https://github.com/sabeelmuttil/"><i class="icon-gh"></i></a></li>
+			<li><a href="http://stackoverflow.com/users/7704089/sabeel-k-m"><i class="icon-stackoverflow"></i></a></li>
+		</ul>
+		<section class="tabs">
+			<input id="tab-1" type="radio" name="radio-set" class="tab-selector-1" checked="checked" />
+			<label for="tab-1" class="tab-label-1"><i class="icon-about-me"></i></label>
+
+			<input id="tab-2" type="radio" name="radio-set" class="tab-selector-2" />
+			<label for="tab-2" class="tab-label-2"><i class="icon-trophy"></i></label>
+
+			<input id="tab-3" type="radio" name="radio-set" class="tab-selector-3" />
+			<label for="tab-3" class="tab-label-3"><i class="icon-mail"></i></label>
+			<div class="clear-shadow"></div>
+			<div class="content">
+				<div class="content-1">
+					<p>This webpage is outdated, I need to update it to showcase my current passion for frontend
+						projects powered by React. Here is a quick summary: I am currently into native applications with
+						React Native and Electron. My Electron apps tap into platform APIs with Nodes child_process API.
+						I like to connect these desktop applications to the all browsers via the WebExtension framework.
+						I do the same with React Native and it's native modules. </p>
+					<h3>React</h3>
+					<p>...</p>
+					<h4>React Native</h4>
+					<p>...</p>
+					<h3>WebExtensions</h3>
+					<p>...</p>
+					<h3>Electron</h3>
+					<p>...</p>
+					<h3>React Native</h3>
+					<p>...</p>
+				</div>
+				<div class="content-2">
+					<input id="tab-2-tab-1" type="radio" name="tab-2-radio-set" class="tab-2-tab-selector-1"
+						checked="checked" />
+					<label for="tab-2-tab-1" class="tab-2-tab-label-1">General</label>
+					<input id="tab-2-tab-2" type="radio" name="tab-2-radio-set" class="tab-2-tab-selector-2" />
+					<label for="tab-2-tab-2" class="tab-2-tab-label-2">Firefox</label>
+					<input id="tab-2-tab-3" type="radio" name="tab-2-radio-set" class="tab-2-tab-selector-3" />
+					<label for="tab-2-tab-3" class="tab-2-tab-label-3">Javascript</label>
+					<h2>My Skills</h2>
+					<ul class="skillset">
+						<li><span class="skill css3"><span></span></span><span>CSS 3</span></li>
+						<li><span class="skill html5"><span></span></span><span>HTML 5</span></li>
+						<li><span class="skill git"><span></span></span><span>Git &amp; GitHub</span></li>
+						<li><span class="skill javascript"><span></span></span><span>Javascript</span></li>
+						<li><span class="skill sql"><span></span></span><span>MySQL, SQL, SQLite</span></li>
+						<li><span class="skill npp"><span></span></span><span>Notepad++</span></li>
+						<li><span class="skill php"><span></span></span><span>PHP</span></li>
+						<li><span class="skill vb"><span></span></span><span>Visual Basic 6.0 &amp; VBA</span></li>
+					</ul>
+					<ul class="skillset">
+						<li><span class="skill css3"><span></span></span><span>nsIWindowsMediatorService</span></li>
+						<li><span class="skill css3"><span></span></span><span>nsIPromptService</span></li>
+						<li><span class="skill css3"><span></span></span><span>nsIHttpChannel</span></li>
+						<li><span class="skill css3"><span></span></span><span>cTypes</span></li>
+						<li><span class="skill css3"><span></span></span><span>Bootstrap</span></li>
+						<li><span class="skill css3"><span></span></span><span>nsIZipWriter</span></li>
+						<li><span class="skill css3"><span></span></span><span>nsIXMLHttpRequest,
+								nsIXMLHttpRequestEventTarget, &amp; nsIJSXMLHttpRequest</span></li>
+						<li><span class="skill css3"><span></span></span><span>nsITimer</span></li>
+					</ul>
+					<ul class="skillset">
+						<li><span class="skill html5"><span></span></span><span>prototype &amp; scritp.aculo.us</span>
+						</li>
+						<li><span class="skill html5"><span></span></span><span>jQuery</span></li>
+						<li><span class="skill html5"><span></span></span><span>Canvas</span></li>
+						<li><span class="skill html5"><span></span></span><span>RegExp</span></li>
+						<li><span class="skill html5"><span></span></span><span>Custom, Native, &amp; CSS3 Events</span>
+						</li>
+					</ul>
+
+				</div>
+				<div class="content-3">
+					<h2>Contact Me</h2>
+					<form class="form-wrapper-01">
+						<input name="username" class="inputbox" type="text" placeholder="Your Name" />
+						<input name="email" class="inputbox" type="text" placeholder="Your Email" />
+						<textarea name="msg" class="message_box" type="textarea" placeholder="Message"></textarea>
+						<a href="#" onclick="sendForm();return false" draggable="false" class="button"></a>
+					</form>
+				</div>
+			</div>
+		</section>
+	</div>
+</body>
+
+</html>
